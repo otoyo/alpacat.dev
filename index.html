@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>alpacat.dev</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
+  </head>
+  <body class="bg-indigo-950">
+    <div class="flex justify-center">
+      <div class="w-5xl md:m-0 m-3">
+        <header class="my-5">
+          <h1 class="text-2xl text-gray-200 font-bold">alpacat.dev</h1>
+        </header>
+        <main class="my-5">
+          <h2 class="mt-5 text-xl text-gray-200 font-bold">Query Parameters</h2>
+          <ul role="list" id="query-parameters"></ul>
+          <template id="listitem">
+            <li class="my-3">
+              <div class="flex min-w-0 gap-x-3">
+                <div class="key min-w-auto py-1 px-2 bg-gray-900 text-gray-200 font-bold text-sm rounded"></div>
+                <div class="value min-w-0 max-w-auto py-1 px-2 bg-gray-900 text-gray-200 text-sm rounded overflow-hidden text-ellipsis whitespace-nowrap"></div>
+              </div>
+            </li>
+          </template>
+
+          <h2 class="mt-5 text-xl text-gray-200 font-bold">URL Encode/Decode</h2>
+          <div class="my-2">
+            <label for="url-encoding-input" class="block my-1 text-gray-200 font-bold text-sm">Input</label>
+            <div class="flex items-center rounded-md bg-white/5 outline-1 -outline-offset-1 outline-gray-600">
+              <input id="url-encoding-input" type="text" class="block grow min-w-0 grow bg-gray-800 py-1.5 pr-3 pl-2 text-base text-white" />
+              <div class="grid shrink-0 grid-cols-1 focus-within:relative">
+                <select id="url-encoding-operation" class="col-start-1 row-start-1 w-full appearance-none rounded-md bg-gray-800 py-1.5 pr-7 pl-3 text-base text-gray-400 *:bg-gray-800 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6">
+                  <option value="encode">Encode</option>
+                  <option value="decode">Decode</option>
+                </select>
+                <svg viewBox="0 0 16 16" fill="currentColor" data-slot="icon" aria-hidden="true" class="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-400 sm:size-4">
+                  <path d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" fill-rule="evenodd" />
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="my-2">
+            <div class="block my-1 text-gray-200 font-bold text-sm">Output</div>
+            <div id="url-encoding-output" class="key min-h-10 min-w-auto py-2 px-2 bg-gray-900 text-gray-200 rounded"></div>
+          </div>
+
+          <h2 class="mt-5 text-xl text-gray-200 font-bold">Base64URL Encode/Decode</h2>
+          <div class="my-2">
+            <label for="base64url-encoding-input" class="block my-1 text-gray-200 font-bold text-sm">Input</label>
+            <div class="flex items-center rounded-md bg-white/5 outline-1 -outline-offset-1 outline-gray-600">
+              <input id="base64url-encoding-input" type="text" class="block grow min-w-0 grow bg-gray-800 py-1.5 pr-3 pl-2 text-base text-white" />
+              <div class="grid shrink-0 grid-cols-1 focus-within:relative">
+                <select id="base64url-encoding-operation" class="col-start-1 row-start-1 w-full appearance-none rounded-md bg-gray-800 py-1.5 pr-7 pl-3 text-base text-gray-400 *:bg-gray-800 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6">
+                  <option value="encode">Encode</option>
+                  <option value="decode">Decode</option>
+                </select>
+                <svg viewBox="0 0 16 16" fill="currentColor" data-slot="icon" aria-hidden="true" class="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-400 sm:size-4">
+                  <path d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" fill-rule="evenodd" />
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="my-2">
+            <div class="block my-1 text-gray-200 font-bold text-sm">Output</div>
+            <div id="base64url-encoding-output" class="key min-h-10 min-w-auto py-2 px-2 bg-gray-900 text-gray-200 rounded"></div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const ul = document.getElementById('query-parameters');
+        const template = document.getElementById('listitem');
+
+        const url = new URL(location.href);
+        for (const [key, value] of url.searchParams) {
+          const listitem = template.content.cloneNode(true);
+          listitem.querySelector('.key').textContent = key;
+          listitem.querySelector('.value').textContent = value;
+          ul.appendChild(listitem);
+        }
+
+        const updateUrlString = () => {
+          const input = document.getElementById('url-encoding-input');
+          const output = document.getElementById('url-encoding-output');
+          const isEncoding = document.getElementById('url-encoding-operation').value === 'encode';
+
+          if (input === '') {
+            return;
+          }
+          output.textContent = isEncoding ? encodeURIComponent(input.value) : decodeURIComponent(input.value);
+        };
+        document.getElementById('url-encoding-input').addEventListener('input', updateUrlString);
+        document.getElementById('url-encoding-operation').addEventListener('change', updateUrlString);
+
+        const decodeBase64UrlString = (base64UrlString) => {
+          let base64String = base64UrlString.replace(/-/g, '+').replace(/_/g, '/');
+
+          const padding = '='.repeat((4 - base64String.length % 4) % 4);
+          base64String += padding;
+
+          return atob(base64String);
+        };
+
+        const encodeBase64UrlString = (s) => {
+          return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        };
+
+        const updateBase64UrlString = () => {
+          const input = document.getElementById('base64url-encoding-input');
+          const output = document.getElementById('base64url-encoding-output');
+          const isEncoding = document.getElementById('base64url-encoding-operation').value === 'encode';
+
+          if (input === '') {
+            return;
+          }
+          output.textContent = isEncoding ? encodeBase64UrlString(input.value) : decodeBase64UrlString(input.value);
+        };
+        document.getElementById('base64url-encoding-input').addEventListener('input', updateBase64UrlString);
+        document.getElementById('base64url-encoding-operation').addEventListener('change', updateBase64UrlString);
+      });
+    </script>
+  </body>
+</html>
