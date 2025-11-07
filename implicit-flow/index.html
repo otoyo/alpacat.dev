@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Implicit Flow</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
+  </head>
+  <body>
+    <nav class="relative bg-[#b6c9ff] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-white/10">
+      <div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+        <div class="relative flex h-16 items-center justify-between">
+          <div class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
+            <div class="flex shrink-0 items-center">
+              <a href="/"><img src="https://cdn.auth0.com/quantum-assets/dist/latest/favicons/auth0-favicon-onlight.png" alt="Auth0" class="h-8 w-auto" /></a>
+            </div>
+            <h1 class="px-3 py-2 text-xl font-bold">Implicit Flow</h1>
+          </div>
+          <div class="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+            <a href="#" id="authorize" class="relative text-sm rounded-sm py-2 px-3 text-white bg-[#4016a0] cursor-pointer">Login</a>
+            <a href="#" id="silent-auth" class="relative text-sm rounded-sm ml-3 py-2 px-3 text-white bg-[#4016a0] cursor-pointer">Silent Auth</a>
+
+            <!-- Profile dropdown -->
+            <el-dropdown id="profile-dropdown" class="relative ml-3">
+              <button class="relative flex rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 cursor-pointer">
+                <span class="absolute -inset-1.5"></span>
+                <span class="sr-only">Open user menu</span>
+                <img id="picture" src="https://cdn.auth0.com/quantum-assets/dist/latest/favicons/auth0-favicon-onlight.png" alt="" class="size-8 rounded-full bg-gray-800 outline -outline-offset-1 outline-white/10" />
+              </button>
+
+              <el-menu anchor="bottom end" popover class="w-48 origin-top-right rounded-md bg-gray-800 py-1 outline -outline-offset-1 outline-white/10 transition transition-discrete [--anchor-gap:--spacing(2)] data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in">
+                <a href="#" id="logout" class="block px-4 py-2 text-sm text-gray-300 focus:bg-white/5 focus:outline-hidden">Logout</a>
+              </el-menu>
+            </el-dropdown>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="flex justify-center">
+      <div class="w-5xl">
+        <h2 class="mb-2 pt-2 text-xl font-bold">Access Token</h2>
+        <div class="p-3 rounded bg-neutral-100">
+          <pre id="access-token" class="text-wrap break-all text-xs"></pre>
+        </div>
+        <h3 class="mb-1 pt-2 font-bold">Decoded Payload</h3>
+        <div class="mb-3 p-3 rounded bg-neutral-100">
+          <pre id="decoded-access-token" class="text-wrap break-all text-xs"></pre>
+        </div>
+
+        <h2 class="mb-2 pt-2 text-xl font-bold border-t-1 border-dashed border-neutral-500">ID Token</h2>
+        <div class="p-3 rounded bg-neutral-100">
+          <pre id="id-token" class="text-wrap break-all text-xs"></pre>
+        </div>
+        <h3 class="mb-1 pt-2 font-bold">Decoded Payload</h3>
+        <div class="mb-3 p-3 rounded bg-neutral-100">
+          <pre id="decoded-id-token" class="text-wrap break-all text-xs"></pre>
+        </div>
+
+        <h2 class="mb-2 pt-2 text-xl font-bold border-t-1 border-dashed border-neutral-500">Expires in</h2>
+        <div class="mb-3 p-3 rounded bg-neutral-100">
+          <pre id="expires-in" class="text-wrap break-all text-xs"></pre>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (async () => {
+        const domain = 'otoyo-dev.jp.auth0.com';
+        const clientID = 'ke9622vsDFp9T0pns8mQlgunRIhiuxyd';
+        const redirectUri = location.host === 'alpacat.dev' ? 'https://alpacat.dev/implicit-flow/' : `http://${location.host}/alpacat.dev/implicit-flow/`;
+        const audience = 'https://otoyo-dev.jp.auth0.com/api/v2/';
+        const scope = 'openid email profile';
+        const responseType = 'token id_token';
+
+        const decodeBase64UrlString = (base64UrlString) => {
+          let base64String = base64UrlString.replace(/-/g, '+').replace(/_/g, '/');
+
+          const padding = '='.repeat((4 - base64String.length % 4) % 4);
+          base64String += padding;
+
+          try {
+            const decodedData = atob(base64String);
+            return JSON.parse(decodedData);
+          } catch (e) {
+            console.error(e);
+          }
+        };
+
+        const formatPayload = (payload) => {
+          let formatted = '{';
+          for (claim in payload) {
+            if (payload[claim] instanceof Array) {
+              formatted += `\n  "${claim}": [`
+              payload[claim].forEach((item, i) => {
+                if (i === payload[claim].length - 1) {
+                  formatted += `\n    "${item}"`
+                } else {
+                  formatted += `\n    "${item}",`
+                }
+              });
+              formatted += `\n  ],`
+            } else {
+              formatted += `\n  "${claim}": "${payload[claim]}",`
+            }
+          }
+          return formatted.substring(0, formatted.length - 1) + '\n}';
+        };
+
+        const displayAuthResult = (authResult) => {
+          if (authResult) {
+            document.getElementById('access-token').textContent = authResult.accessToken;
+            document.getElementById('id-token').textContent = authResult.idToken;
+            document.getElementById('expires-in').textContent = authResult.expiresIn;
+
+            const accessTokenPayload = decodeBase64UrlString(authResult.accessToken.split('.')[1]);
+            const idTokenPayload = decodeBase64UrlString(authResult.idToken.split('.')[1]);
+
+            document.getElementById('decoded-access-token').textContent = formatPayload(accessTokenPayload);
+            document.getElementById('decoded-id-token').textContent = formatPayload(idTokenPayload);
+
+            document.getElementById('authorize').style.display = 'none';
+            document.getElementById('picture').setAttribute('src', idTokenPayload.picture);
+            document.getElementById('profile-dropdown').style.display = 'block';
+          } else {
+            document.getElementById('authorize').style.display = 'block';
+            document.getElementById('profile-dropdown').style.display = 'none';
+          }
+        };
+
+        const generateRandomHexString = (length) => {
+          const letters = "0123456789abcdef";
+          let s = '';
+          for (let i = 0; i < length; i++) {
+            s += letters[(Math.floor(Math.random() * 16))];
+          }
+          return s;
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+          const authorizeParams = new URLSearchParams({
+            audience,
+            client_id: clientID,
+            scope,
+            response_type: responseType,
+            redirect_uri: redirectUri,
+            nonce: generateRandomHexString(6),
+            state: generateRandomHexString(6),
+          });
+          document.getElementById('authorize').setAttribute('href', `https://${domain}/authorize?${authorizeParams}`);
+
+          const silentAuthParams = new URLSearchParams({
+            audience,
+            client_id: clientID,
+            scope,
+            response_type: responseType,
+            redirect_uri: redirectUri,
+            nonce: generateRandomHexString(6),
+            state: generateRandomHexString(6),
+            prompt: 'none',
+          });
+          document.getElementById('silent-auth').setAttribute('href', `https://${domain}/authorize?${silentAuthParams}`);
+
+          const logoutParams = new URLSearchParams({
+            client_id: clientID,
+            returnTo: redirectUri,
+          });
+          document.getElementById('logout').setAttribute('href', `https://${domain}/v2/logout?${logoutParams}`);
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+          let authResult;
+          const url = new URL(location.href);
+          if (url.hash.includes('access_token')) {
+            authResult = url.hash.split('#').pop().split('&').reduce((acc, query) => {
+              const key = {
+                'access_token': 'accessToken',
+                'id_token': 'idToken',
+                'expires_in': 'expiresIn',
+              }[query.split('=')[0]];
+              const value = query.split('=')[1];
+              acc[key] = value;
+              return acc;
+            }, {});
+          }
+          displayAuthResult(authResult);
+        });
+      })();
+    </script>
+  </body>
+</html>
