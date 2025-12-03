@@ -25,6 +25,12 @@
         </header>
         <main class="my-5">
           <h2 class="mt-5 text-xl text-gray-200 font-bold">Query Parameters</h2>
+          <div class="my-2">
+            <label for="url-input" class="block my-1 text-gray-200 font-bold text-sm">Input</label>
+            <div class="flex items-center rounded-md bg-white/5 outline-1 -outline-offset-1 outline-gray-600">
+              <input id="url-input" type="text" placeholder="https://" class="block grow min-w-0 grow bg-gray-800 py-1.5 pr-3 pl-2 text-base text-white" />
+            </div>
+          </div>
           <ul role="list" id="query-parameters"></ul>
           <template id="listitem">
             <li class="my-3">
@@ -85,13 +91,22 @@
         const ul = document.getElementById('query-parameters');
         const template = document.getElementById('listitem');
 
-        const url = new URL(location.href);
-        for (const [key, value] of url.searchParams) {
-          const listitem = template.content.cloneNode(true);
-          listitem.querySelector('.key').textContent = key;
-          listitem.querySelector('.value').textContent = value;
-          ul.appendChild(listitem);
-        }
+        const updateQueryParameters = () => {
+          const input = document.getElementById('url-input');
+
+          while (ul.firstChild) {
+            ul.removeChild(ul.firstChild);
+          }
+
+          const url = new URL(input.value);
+          for (const [key, value] of url.searchParams) {
+            const listitem = template.content.cloneNode(true);
+            listitem.querySelector('.key').textContent = key;
+            listitem.querySelector('.value').textContent = value;
+            ul.appendChild(listitem);
+          }
+        };
+        document.getElementById('url-input').addEventListener('input', updateQueryParameters);
 
         const updateUrlString = () => {
           const input = document.getElementById('url-encoding-input');
