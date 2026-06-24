@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   </head>
   <body class="bg-indigo-950">
     <div class="flex justify-center">
@@ -82,6 +83,18 @@
             <div class="block my-1 text-gray-200 font-bold text-sm">Output</div>
             <div id="base64url-encoding-output" class="key min-h-10 min-w-auto py-2 px-2 bg-gray-900 text-gray-200 rounded"></div>
           </div>
+
+          <h2 class="mt-5 text-xl text-gray-200 font-bold">QR Code</h2>
+          <div class="my-2">
+            <label for="barcode-uri-input" class="block my-1 text-gray-200 font-bold text-sm">Input</label>
+            <div class="flex items-center rounded-md bg-white/5 outline-1 -outline-offset-1 outline-gray-600">
+              <input id="barcode-uri-input" type="text" placeholder="otpauth://" class="block grow min-w-0 grow bg-gray-800 py-1.5 pr-3 pl-2 text-base text-white" />
+            </div>
+          </div>
+          <div class="my-2">
+            <div class="block my-1 text-gray-200 font-bold text-sm">Output</div>
+            <div id="barcode-uri-output"></div>
+          </div>
         </main>
       </div>
     </div>
@@ -146,6 +159,24 @@
         };
         document.getElementById('base64url-encoding-input').addEventListener('input', updateBase64UrlString);
         document.getElementById('base64url-encoding-operation').addEventListener('change', updateBase64UrlString);
+
+        const displayQRCode = () => {
+          console.log('input');
+          const output = document.getElementById('barcode-uri-output');
+          output.replaceChildren();
+
+          const input = document.getElementById('barcode-uri-input');
+          if (input.value === '') {
+            return;
+          }
+
+          new QRCode(output, {
+            text: input.value,
+            width: 200,
+            height: 200
+          });
+        };
+        document.getElementById('barcode-uri-input').addEventListener('input', displayQRCode);
       });
     </script>
   </body>
